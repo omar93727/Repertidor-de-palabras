@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repetir Palabra</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-image: url('https://storage.googleapis.com/a1aa/image/r9zvrNocIiblDxYIIFaACg4L-k4XG9ttd1mp7A9ImK0.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      padding-top: 10px;
+    }
+
+    @keyframes tiraDeColor {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .colorFluorescente {
+      background: linear-gradient(90deg, red, yellow, lime, cyan, blue, magenta, red);
+      background-size: 400% 100%;
+      animation: tiraDeColor 2s linear infinite;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-weight: bold;
+    }
+
+    #contenedor {
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #resultado {
+      margin-top: 20px;
+      padding: 10px;
+      width: 100%;
+      height: 250px;
+      max-height: 32em;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.5);
+      text-align: left;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: bold;
+      display: none;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    button {
+      background: rgba(0, 255, 0, 0.7);
+      color: black;
+      font-size: 14px;
+      padding: 8px;
+      border: none;
+      cursor: pointer;
+      margin: 3px;
+      font-weight: bold;
+      width: 100%;
+      max-width: 250px;
+    }
+
+    button:hover {
+      background: rgba(13, 221, 13, 0.8);
+    }
+
+    input, select {
+      width: 100%;
+      max-width: 250px;
+      padding: 5px;
+      margin: 5px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      background: transparent;
+      border: 2px solid white;
+      color: white;
+      border-radius: 5px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: cyan;
+    }
+
+    #barraCarga {
+      width: 100%;
+      max-width: 250px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #barraCarga div {
+      height: 100%;
+      width: 0%;
+      background: lime;
+      transition: width 0.1s linear;
+    }
+
+    #loadingText {
+      margin-top: 5px;
+      font-size: 16px;
+      color: white;
+      font-weight: bold;
+      display: none;
+    }
+
+    #firma {
+      position: absolute;
+      bottom: 10px;
+      text-align: center;
+      width: 100%;
+    }
+
+    #firma span {
+      font-weight: bold;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Repetir Palabra</h1>
+
+  <div id="contenedor">
+    <label for="palabra">Escribe una palabra o frase:</label>
+    <input type="text" id="palabra" placeholder="Escribe aquí...">
+    
+    <label for="repeticiones">Elige cuántas veces quieres repetir:</label>
+    <select id="repeticiones">
+      <option value="1000">1,000 veces</option>
+      <option value="5000">5,000 veces</option>
+      <option value="10000">10,000 veces</option>
+      <option value="15000">15,000 veces</option>
+      <option value="20000">20,000 veces</option>
+      <option value="25000">25,000 veces</option>
+      <option value="30000">30,000 veces</option>
+      <option value="35000">35,000 veces</option>
+    </select>
+    
+    <button onclick="repetirPalabra()">Repetir</button>
+    <button onclick="cancelarRepeticion()">Cancelar</button>
+    <button onclick="copiarAlPortapapeles()">Copiar al portapapeles</button>
+    <button onclick="borrarTexto()">Borrar palabras repetidas</button>
+
+    <div id="barraCarga">
+      <div id="progreso"></div>
+    </div>
+    <p id="loadingText">Loading 0%</p>
+
+    <div id="resultado"></div>
+  </div>
+
+  <p id="firma"><span class="colorFluorescente">© OMAR ANTONI</span></p>
+
+  <script>
+    let cancelado = false;
+
+    function repetirPalabra() {
+        const palabra = document.getElementById('palabra').value.trim();
+        const repeticiones = parseInt(document.getElementById('repeticiones').value);
+        const resultadoDiv = document.getElementById('resultado');
+        const barraCarga = document.getElementById('barraCarga');
+        const progreso = document.getElementById('progreso');
+        const loadingText = document.getElementById('loadingText');
+
+        if (!palabra) {
+            alert('Por favor, ingresa una palabra o emoji.');
+            return;
+        }
+
+        resultadoDiv.style.display = 'none';
+        resultadoDiv.textContent = '';
+        barraCarga.style.display = 'block';
+        loadingText.style.display = 'block';
+        cancelado = false;
+
+        let resultadoTexto = palabra.repeat(repeticiones) + '\n';
+        let inicio = Date.now();
+        let duracionCarga = 2000;
+
+        function actualizarCarga() {
+            if (cancelado) {
+                barraCarga.style.display = 'none';
+                loadingText.style.display = 'none';
+                return;
+            }
+
+            let porcentaje = Math.min(100, ((Date.now() - inicio) / duracionCarga) * 100);
+            progreso.style.width = porcentaje + '%';
+            loadingText.textContent = `Loading ${Math.floor(porcentaje)}%`;
+
+            if (porcentaje < 100) {
+                requestAnimationFrame(actualizarCarga);
+            } else {
+                resultadoDiv.textContent = resultadoTexto;
+                resultadoDiv.style.display = 'block';
+                barraCarga.style.display = 'none';
+                loadingText.style.display = 'none';
+            }
+        }
+
+        requestAnimationFrame(actualizarCarga);
+    }
+
+    function cancelarRepeticion() { cancelado = true; }
+
+    function copiarAlPortapapeles() {
+        const resultado = document.getElementById('resultado');
+        if (resultado.textContent.trim()) {
+            navigator.clipboard.writeText(resultado.textContent).then(() => alert('Texto copiado'));
+        }
+    }
+
+    function borrarTexto() { document.getElementById('resultado').textContent = ''; }
+  </script>
+</body>
+</html>
